@@ -1,0 +1,11 @@
+{
+    "name": "scraper",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "node scraper.js"
+    },
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.12",
+        "google-news-scraper": "^1.0.9"
+    }
+}
