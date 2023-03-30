@@ -2,7 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio')
 const fs = require('fs');
 
-let conteudo = '['
+let noticias = []
 let urls_omunicipo = ['https://omunicipioblumenau.com.br/?s=policia', 'https://omunicipioblumenau.com.br/pagina/#/?s=policia']
 let urls_blog_jaime = ['https://www.blogdojaime.com.br/category/noticias/', 'https://www.blogdojaime.com.br/category/noticias/page/$#/']
 let urls_correiosc = ['https://www.correiosc.com.br/?s=policia', 'https://www.correiosc.com.br/page/#/?s=policia']
@@ -22,7 +22,7 @@ async function getPaginas(url, regex) {
             }
         })
         .catch(error => {
-            console.error(error);
+            // console.error(error);
         });
 }
 
@@ -40,7 +40,7 @@ async function getOutrasPaginas(url, regex) {
                 }
             })
             .catch(error => {
-                console.error(error);
+                // console.error(error);
                 return
             });
     }
@@ -50,21 +50,16 @@ async function getOutrasPaginas(url, regex) {
 async function getConteudoPagina(url) {
     axios.get(url)
         .then(response => {
+            const noticia = {}
             const $ = cheerio.load(response.data)
+            noticia.title = $('h1').text()
+            noticia.description = $('p').text()
+            noticia.url = url
 
-            conteudo += '{\n'
-            conteudo += `\"title\": \"${$.html('h1').replace(/<(?:"[^"]*"['"]*|'[^']*'['"]*|[^'">])+>/g, "").replace('\n', '').replace('\t', '')}\",\n`
-            if (url.includes('https://www.blogdojaime.com.br/')) {
-                conteudo += `\"description\": \"${$('p').first().text().replace(/<(?:"[^"]*"['"]*|'[^']*'['"]*|[^'">])+>/g, "").replace('\n', '').replace('\t', '')}\",\n`
-            } else {
-                conteudo += `\"description\": \"${$.html('p').replace(/<(?:"[^"]*"['"]*|'[^']*'['"]*|[^'">])+>/g, "").replace('\n', '').replace('\t', '')}\",\n`
-            }
-            conteudo += `\"url\": \"${url}\"`
-            conteudo += '\n},\n'
-
+            noticias.push(noticia)
         })
         .catch(error => {
-            console.error(error);
+            // console.error(error);
         });
 
 }
@@ -76,13 +71,9 @@ async function init() {
         await getOutrasPaginas(urls[index][1], regex[index])
     }
 
+    console.log('@@@ NOTICIAS @@@', noticias)
 
-    // remove a última virgula
-    conteudo = conteudo.substring(0, conteudo.lastIndexOf(','))
-    conteudo += '\n]'
-
-    // escreve no arquivo json
-    fs.writeFile('noticias.json', conteudo, (err) => {
+    fs.writeFile('noticias.json', JSON.stringify(noticias), (err) => {
         if (err) {
             console.error(err);
             return;
