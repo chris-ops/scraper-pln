@@ -28,7 +28,7 @@ async function getPaginas(url, regex) {
 
 // percorre a paginação
 async function getOutrasPaginas(url, regex) {
-    for (let index = 2; index < 5; index++) {
+    for (let index = 2; index < 10; index++) {
         await axios.get(url.replace('#', index))
 
             .then(async (response) => {
