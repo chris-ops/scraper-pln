@@ -8,7 +8,9 @@ let urls_blog_jaime = ['https://www.blogdojaime.com.br/category/noticias/', 'htt
 let urls_correiosc = ['https://www.correiosc.com.br/?s=policia', 'https://www.correiosc.com.br/page/#/?s=policia']
 
 let urls = [urls_omunicipo, urls_blog_jaime, urls_correiosc]
+// let urls = [urls_blog_jaime]
 let regex = [/<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g, /<div\s+class='boxmaisvistoshome'>\s+<a\shref="([^"]+)"/g, /<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g]
+// let regex = [/<div\s+class='boxmaisvistoshome'>\s+<a\shref="([^"]+)"/g, /<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g]
 
 // percorre a página inicial
 async function getPaginas(url, regex) {
@@ -28,7 +30,7 @@ async function getPaginas(url, regex) {
 
 // percorre a paginação
 async function getOutrasPaginas(url, regex) {
-    for (let index = 2; index < 10; index++) {
+    for (let index = 2; index < 5; index++) {
         await axios.get(url.replace('#', index))
 
             .then(async (response) => {
@@ -53,13 +55,20 @@ async function getConteudoPagina(url) {
             const noticia = {}
             const $ = cheerio.load(response.data)
             noticia.title = $('h1').text()
-            noticia.description = $('p').text()
+            if (url.indexOf('blogdojaime') !== -1) {
+              console.log(url)
+              console.log('blog do jaime', $('div.conteudopostagem').childNodes)
+              
+              noticia.description = $('div.conteudopostagem').childNodes('p').text()
+            } else {
+              noticia.description = $('p').text()
+            }
             noticia.url = url
 
             noticias.push(noticia)
         })
         .catch(error => {
-            // console.error(error);
+            console.error(error);
         });
 
 }
@@ -70,8 +79,6 @@ async function init() {
         await getPaginas(urls[index][0], regex[index])
         await getOutrasPaginas(urls[index][1], regex[index])
     }
-
-    console.log('@@@ NOTICIAS @@@', noticias)
 
     fs.writeFile('noticias.json', JSON.stringify(noticias), (err) => {
         if (err) {
