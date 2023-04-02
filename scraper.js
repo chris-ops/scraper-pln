@@ -48,24 +48,32 @@ async function getOutrasPaginas(url, regex) {
     }
 }
 
-// adicona o título, a notícia e o link da matéria ao conteúdo do arquivo
+// adiciona o título, a notícia e o link da matéria ao conteúdo do arquivo
 async function getConteudoPagina(url) {
     axios.get(url)
         .then(response => {
-            const noticia = {}
             const $ = cheerio.load(response.data)
-            noticia.title = $('h1').text()
             if (url.indexOf('blogdojaime') !== -1) {
-              console.log(url)
-              console.log('blog do jaime', $('div.conteudopostagem').childNodes)
+              // Find all div tags with class "conteudopostagem"
+              const divs = $('div.conteudopostagem');
               
-              noticia.description = $('div.conteudopostagem').childNodes('p').text()
-            } else {
-              noticia.description = $('p').text()
-            }
-            noticia.url = url
+              // Loop through each div tag and extract the text of its p tags
+              divs.each((i, div) => {
+                const ps = $(div).find('p');
+                const texts = ps.map((j, p) => $(p).text()).get();
+                //TODO use extracted texts
+                console.log('TEXTS', texts)
+              });
 
-            noticias.push(noticia)
+            } else {
+              const noticia = {
+                title: $('h1').text(),
+                description: $('p').text(),
+                url
+              }
+
+              noticias.push(noticia)
+            }
         })
         .catch(error => {
             console.error(error);
@@ -75,9 +83,9 @@ async function getConteudoPagina(url) {
 
 async function init() {
     // percorre 4 páginas de cada portal em 'urls' e extrai as notícias
-    for (let index = 0; index < urls.length; index++) {
-        await getPaginas(urls[index][0], regex[index])
-        await getOutrasPaginas(urls[index][1], regex[index])
+    for (let i = 0; i < urls.length; i++) {
+        await getPaginas(urls[i][0], regex[i])
+        await getOutrasPaginas(urls[i][1], regex[i])
     }
 
     fs.writeFile('noticias.json', JSON.stringify(noticias), (err) => {
