@@ -3,14 +3,16 @@ const cheerio = require('cheerio')
 const fs = require('fs');
 
 let noticias = []
-let urls_omunicipo = ['https://omunicipioblumenau.com.br/?s=policia', 'https://omunicipioblumenau.com.br/pagina/#/?s=policia']
-let urls_blog_jaime = ['https://www.blogdojaime.com.br/category/noticias/', 'https://www.blogdojaime.com.br/category/noticias/page/$#/']
-let urls_correiosc = ['https://www.correiosc.com.br/?s=policia', 'https://www.correiosc.com.br/page/#/?s=policia']
+const urls_omunicipo = ['https://omunicipioblumenau.com.br/?s=policia', 'https://omunicipioblumenau.com.br/pagina/#/?s=policia']
+const oMunicipioRegex = /<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g
+const urls_blog_jaime = ['https://www.blogdojaime.com.br/category/noticias/', 'https://www.blogdojaime.com.br/category/noticias/page/$#/']
+const blogJaimeRegex = /<div\s+class='boxmaisvistoshome'>\s+<a\shref="([^"]+)"/g
+const urls_correiosc = ['https://www.correiosc.com.br/?s=policia', 'https://www.correiosc.com.br/page/#/?s=policia']
+const correiosRegex = /<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g
+
 
 let urls = [urls_omunicipo, urls_blog_jaime, urls_correiosc]
-// let urls = [urls_blog_jaime]
-let regex = [/<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g, /<div\s+class='boxmaisvistoshome'>\s+<a\shref="([^"]+)"/g, /<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g]
-// let regex = [/<div\s+class='boxmaisvistoshome'>\s+<a\shref="([^"]+)"/g, /<div\s+class="td-module-thumb"><a\s+href="([^"]+)"/g]
+let regex = [oMunicipioRegex, blogJaimeRegex, correiosRegex]
 
 // percorre a página inicial
 async function getPaginas(url, regex) {
@@ -53,33 +55,28 @@ async function getConteudoPagina(url) {
     axios.get(url)
         .then(response => {
             const $ = cheerio.load(response.data)
+
+            let paragraphs = []
+
             if (url.indexOf('blogdojaime') !== -1) {
-              // Find all div tags with class "conteudopostagem"
               const divs = $('div.conteudopostagem');
               
-              // Loop through each div tag and extract the text of its p tags
               divs.each((i, div) => {
                 const ps = $(div).find('p');
-                const texts = ps.map((j, p) => $(p).text()).get();
-
-                const noticia = {
-                    title: $('h1').text(),
-                    description: texts.toString().replace(/[^\x00-\x7F]/g,""), // convert array to string and remove all non-ascii chars
-                    url
-                  }
-    
-                  noticias.push(noticia)
+                paragraphs = ps.map((j, p) => $(p).text()).get();
               });
 
             } else {
-              const noticia = {
-                title: $('h1').text(),
-                description: $('p').text(),
-                url
-              }
-
-              noticias.push(noticia)
+              const ps = $('p');
+              paragraphs = ps.map((j, p) => $(p).text()).get()
             }
+
+            const noticia = {
+              title: $('h1').text(),
+              description: paragraphs,
+              url
+            }
+            noticias.push(noticia)
         })
         .catch(error => {
             console.error(error);
