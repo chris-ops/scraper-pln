@@ -24,13 +24,13 @@ async function getPaginas(url, regex) {
             }
         })
         .catch(error => {
-            // console.error(error);
+            console.error(error);
         });
 }
 
 // percorre a paginação
 async function getOutrasPaginas(url, regex) {
-    for (let index = 2; index < 5; index++) {
+    for (let index = 2; index < 10; index++) {
         await axios.get(url.replace('#', index))
 
             .then(async (response) => {
@@ -42,7 +42,7 @@ async function getOutrasPaginas(url, regex) {
                 }
             })
             .catch(error => {
-                // console.error(error);
+                console.error(error);
                 return
             });
     }
@@ -61,8 +61,14 @@ async function getConteudoPagina(url) {
               divs.each((i, div) => {
                 const ps = $(div).find('p');
                 const texts = ps.map((j, p) => $(p).text()).get();
-                //TODO use extracted texts
-                console.log('TEXTS', texts)
+
+                const noticia = {
+                    title: $('h1').text(),
+                    description: texts.toString().replace(/[^\x00-\x7F]/g,""), // convert array to string and remove all non-ascii chars
+                    url
+                  }
+    
+                  noticias.push(noticia)
               });
 
             } else {
